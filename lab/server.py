@@ -5,6 +5,7 @@
 import socket, sys, re, os, time
 sys.path.append("../lib")       # for params
 import params
+import framedMsg
 
 switchesVarDefaults = (
     (('-l', '--listenPort') ,'listenPort', 50001),

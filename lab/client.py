@@ -4,6 +4,8 @@
 import socket, sys, re, time
 sys.path.append("../lib")       # for params
 import params
+from my_readLine import my_fileReader
+import framedMsg
 
 switchesVarDefaults = (
     (('-s', '--server'), 'server', "127.0.0.1:50001"),
@@ -62,5 +64,11 @@ while 1:
     print("Received '%s'" % data)
     if len(data) == 0:
         break
+
+    data = my_fileReader("test.txt")
+    framed_msg = framedMsg.frameMsg()
+    sent = framed_msg.send_msg(data)
+    print("Maybe Sent")
+    
 print("Zero length read.  Closing")
 s.close()

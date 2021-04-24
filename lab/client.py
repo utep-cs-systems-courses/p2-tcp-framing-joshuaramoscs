@@ -56,7 +56,7 @@ response = framed_sock.recv_msg()
 os.write(1, ("Receiving " + response + '\n').encode())
 
 if response == "accept":
-    print("Receiving file named " + localFile + '\n')
+    print("Will now send file named " + localFile + '\n')
     data = my_fileReader(localFile)
     framed_sock.send_msg(data)
     os.write(1, "Sending {}\n".format(localFile).encode())

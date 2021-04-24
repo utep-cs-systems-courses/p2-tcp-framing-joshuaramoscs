@@ -28,8 +28,10 @@ class framedSocket:
             self.buff = self.sock.recv(self.limit).decode() # recv from socket and save it in buff
             if len(self.buff) == 0: # Recieved nothing. Should never happen.
                 return ""
-        else:                       # Buffer was not empty. Should never happen.
-            return ""
+
+        # Buffer was not empty. I am leaving this in as a talking point. It is ok to not be empty.
+        #else:
+        #    return ""
 
         # Set initial buffer
         message_start = self.buff.index(':')

@@ -1,20 +1,15 @@
 #! /usr/bin/env python3
 
-# Echo server program
-
-import socket, sys, re, os, time
+import socket, sys, re, os
 sys.path.append("../lib")       # for params
-import params
-import framedMsg
+import params, framedSocket
+import serverThread
 
 switchesVarDefaults = (
     (('-l', '--listenPort') ,'listenPort', 50001),
     (('-?', '--usage'), "usage", False), # boolean (set if present)
     )
 
-
-
-progname = "echoserver"
 paramMap = params.parseParams(switchesVarDefaults)
 
 listenPort = paramMap['listenPort']
@@ -23,18 +18,11 @@ listenAddr = ''       # Symbolic name meaning all available interfaces
 if paramMap['usage']:
     params.usage()
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((listenAddr, listenPort))
-s.listen(1)              # allow only one outstanding request
-# s is a factory for connected sockets
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.bind((listenAddr, listenPort))
+sock.listen(1)              # allow only one outstanding request
+# sock is a factory for connected sockets
 
 while True:
-    conn, addr = s.accept() # wait until incoming connection request (and accept it)
-    if os.fork() == 0:      # child becomes server
-        print('Connected by', addr)
-        conn.send(b"hello")
-        time.sleep(3)
-        conn.send(b"world")
-        conn.shutdown(socket.SHUT_WR)
-
-
+    connectedSock, address = sock.accept() # wait until incoming connection request (and accept it)
+    serverThread.serverThread(connectedSock, address).start()

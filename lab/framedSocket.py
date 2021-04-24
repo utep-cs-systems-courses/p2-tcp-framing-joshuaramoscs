@@ -20,7 +20,7 @@ class framedSocket:
             current_byte = self.sock.send(byte_array)
             sent_message += byte_array[:current_byte].decode()
             byte_array = byte_array[current_byte:]
-        return new_message
+        return message
 
     def recv_msg(self):
         # Recieve message

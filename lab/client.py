@@ -1,11 +1,10 @@
 #! /usr/bin/env python3
 
-# Echo client program
-import socket, sys, re, time
+import socket, sys, re, time, os
 sys.path.append("../lib")       # for params
 import params
-from my_readLine import my_fileReader
-import framedMsg
+from fileReader import my_fileReader
+import framedSocket
 
 switchesVarDefaults = (
     (('-s', '--server'), 'server', "127.0.0.1:50001"),
@@ -13,62 +12,56 @@ switchesVarDefaults = (
     (('-?', '--usage'), "usage", False), # boolean (set if present)
     )
 
+if sys.argv[0] == "send":
+    try:
+        localFile = sys.argv[1]
+        serverHost, remoteFile  = re.split(":", sys.argv[2])
+        serverPort = 50001
+    except:
+        print("Invalid command. Try \"send [localFile] [serverHost]:[remoteFile]\"")
+        sys.exit(1)
 
-progname = "framedClient"
-paramMap = params.parseParams(switchesVarDefaults)
-
-server, usage  = paramMap["server"], paramMap["usage"]
-
-if usage:
-    params.usage()
-
-try:
-    serverHost, serverPort = re.split(":", server)
-    serverPort = int(serverPort)
-except:
-    print("Can't parse server:port from '%s'" % server)
-    sys.exit(1)
-
-s = None
+sock = None
 for res in socket.getaddrinfo(serverHost, serverPort, socket.AF_UNSPEC, socket.SOCK_STREAM):
     af, socktype, proto, canonname, sa = res
     try:
         print("creating sock: af=%d, type=%d, proto=%d" % (af, socktype, proto))
-        s = socket.socket(af, socktype, proto)
-    except socket.error as msg:
+        sock = socket.socket(af, socktype, proto)
+    except sock.error as msg:
         print(" error: %s" % msg)
-        s = None
+        sock = None
         continue
     try:
         print(" attempting to connect to %s" % repr(sa))
-        s.connect(sa)
-    except socket.error as msg:
+        sock.connect(sa)
+    except sock.error as msg:
         print(" error: %s" % msg)
-        s.close()
-        s = None
+        sock.close()
+        sock = None
         continue
     break
 
-if s is None:
+if sock is None:
     print('could not open socket')
     sys.exit(1)
 
-delay = float(paramMap['delay']) # delay before reading (default = 0s)
-if delay != 0:
-    print(f"sleeping for {delay}s")
-    time.sleep(delay)
-    print("done sleeping")
+framed_sock = framedSocket.framedSocket(sock)
+sent = framed_sock.send_msg('send')
+os.write(1, ("Sending " + sent + '\n').encode())
 
-while 1:
-    data = s.recv(1024).decode()
-    print("Received '%s'" % data)
-    if len(data) == 0:
-        break
+sent = framed_sock.send_msg(remoteFile)
+os.write(1, ("Sending " + sent + '\n').encode())
 
-    data = my_fileReader("test.txt")
-    framed_msg = framedMsg.frameMsg()
-    sent = framed_msg.send_msg(data)
-    print("Maybe Sent")
+response = framed_sock.recv_msg()
+os.write(1, ("Receiving " + response + '\n').encode())
+
+if response == "accept":
+    print("Receiving file named " + localFile + '\n')
+    data = my_fileReader(localFile)
+    framed_sock.send_msg(data)
+    os.write(1, "Sending {}\n".format(localFile).encode())
+
+    response = framed_sock.recv_msg()
+    os.write(1, "Receiving {} \n".format(response).encode())
     
-print("Zero length read.  Closing")
-s.close()
+sock.close()

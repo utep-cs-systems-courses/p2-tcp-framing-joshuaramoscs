@@ -3,6 +3,7 @@ from threading import Thread, enumerate
 import framedSocket
 
 threadNum = 0 # global thread count
+lock = threading.Lock()
 
 class serverThread(Thread):
     def __init__(self, connectedSock, addr):
@@ -17,21 +18,22 @@ class serverThread(Thread):
         framed_sock = framedSocket.framedSocket(self.connectedSock)
 
         request = framed_sock.recv_msg()
-        os.write(1, "Recieving: {} (line20)\n".format(request).encode())
+        os.write(1, "Recieving: {}\n".format(request).encode())
 
         if request == "send":
             fileName = framed_sock.recv_msg()
             os.write(1, "Receiving {}\n".format(fileName).encode())
 
-            path = "./server/" + fileName
+            path = "./server/"+fileName
 
+            
             if os.path.isfile(path):
                 sent = framed_sock.send_msg("This file aready exists.")
                 os.write(1, "Sending {}\n".format(sent).encode())
 
             else:
                 os.write(1, ("Sending: " + framed_sock.send_msg("accept") + "\n").encode())
-                fd = os.open("./server/test.txt", os.O_CREAT | os.O_WRONLY)
+                fd = os.open("./server/"+fileName, os.O_CREAT | os.O_WRONLY)
                 os.write(fd, (framed_sock.recv_msg()).encode())
                 os.close(fd)
                 os.write(1, "File {} created.\n".format(fileName).encode())

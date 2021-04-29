@@ -1,4 +1,0 @@
-This is a text file.
-This is on a new line.
-
-There was an empty line above this line.

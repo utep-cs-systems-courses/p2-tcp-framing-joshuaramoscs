@@ -1,6 +1,7 @@
 import os, sys, socket, time
 from threading import Thread, enumerate
 import framedSocket
+import threading
 
 threadNum = 0 # global thread count
 lock = threading.Lock()
@@ -26,7 +27,7 @@ class serverThread(Thread):
 
             path = "./server/"+fileName
 
-            
+            lock.acquire()
             if os.path.isfile(path):
                 sent = framed_sock.send_msg("This file aready exists.")
                 os.write(1, "Sending {}\n".format(sent).encode())
@@ -37,6 +38,7 @@ class serverThread(Thread):
                 os.write(fd, (framed_sock.recv_msg()).encode())
                 os.close(fd)
                 os.write(1, "File {} created.\n".format(fileName).encode())
+            lock.release()
         else:
             os.write(1, "Inconplete request".encode())
         self.connectedSock.shutdown(socket.SHUT_WR)
